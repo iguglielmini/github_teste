@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import axios from "axios"
 //scss
 import './styles.scss'
 //Animation
@@ -7,11 +6,13 @@ import FadeIn from 'react-fade-in'
 //components
 import Header from '../../Components/Header'
 import ResultSearch from '../../Components/ResultSearch'
-
+//helps
+import { api } from '../../helps'
 
 class Home extends Component {
     state = {
         user: "",
+        infoUser: {},
         repos: [],
         error: "",
         loading: false
@@ -25,42 +26,48 @@ class Home extends Component {
         this.setState({ loading: true });
 
         try {
-            const { data: repos } = await axios.get(
-                `https://api.github.com/users/${user}/repos`
-            );
+            const { data: { name, avatar_url, login, location } } = await api.get(`/users/${user}`);
+            const { data: repos } = await api.get(`/users/${user}/repos`);
 
-            console.log(repos);
+            console.log(repos, name);
 
-            this.setState({ repos, error: "", loading: false });
+            this.setState({
+                repos, error: "",
+                loading: false,
+                infoUser: { name, avatar_url, login, location },
+            });
+
         } catch (error) {
             this.setState({
                 error: "Usuário não encontrado",
                 repos: [],
-                loading: false
+                infoUser: {},
+                loading: false,
             });
         }
     };
     render() {
-        const { user, repos, error, loading } = this.state;
+        const { user, repos, error, loading, infoUser } = this.state;
         return (
-            <FadeIn>
                 <div className="container">
                     <div className="content">
                         <Header
                             changeUser={this.changeUser}
                             user={user}
-                            error={error}
                             loading={loading}
                             buttonAction={this.searchUser}
                         />
                         <div className="result-data">
-                            <ResultSearch
-                                repos={repos}
-                            />
+                            <FadeIn>
+                                <ResultSearch
+                                    infoUser={infoUser}
+                                    repos={repos}
+                                    error={error}
+                                />
+                            </FadeIn>
                         </div>
                     </div>
                 </div>
-            </FadeIn >
         )
     }
 
